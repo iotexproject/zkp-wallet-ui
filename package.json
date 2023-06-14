@@ -1,0 +1,29 @@
+{
+  "name": "zkp-wallet-ui",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@headlessui/react": "^1.7.13",
+    "@heroicons/react": "^2.0.16",
+    "@tailwindcss/line-clamp": "^0.4.2",
+    "ethers": "^5.7.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.9",
+    "@types/react-dom": "^18.0.5",
+    "@vitejs/plugin-react": "^2",
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.21",
+    "tailwindcss": "^3.2.7",
+    "tailwindcss-safe-area": "^0.2.2",
+    "typescript": "^4.7.2",
+    "vite": "^3",
+    "vite-plugin-node-polyfills": "^0.7.0"
+  }
+}
