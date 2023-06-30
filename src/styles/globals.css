@@ -41,9 +41,6 @@ a {
   box-sizing: border-box;
 }
 
-html {
-  color-scheme: dark;
-}
 body {
-  @apply min-h-screen-safe bg-black text-white;
+  @apply min-h-screen-safe text-white;
 }
