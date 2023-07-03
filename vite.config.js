@@ -9,6 +9,17 @@ export default defineConfig({
 			global: true,
 		}),
 	],
+	optimizeDeps: {
+		esbuildOptions: {
+			target: "esnext",
+			define: {
+				global: 'globalThis'
+			},
+			supported: { 
+				bigint: true
+			},
+		}
+	},
 	define: {
 		'process.env': {},
 	},
