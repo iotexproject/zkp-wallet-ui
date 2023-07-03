@@ -7,10 +7,11 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@account-abstraction/contracts": "^0.6.0",
     "@headlessui/react": "^1.7.13",
     "@heroicons/react": "^2.0.16",
     "@tailwindcss/line-clamp": "^0.4.2",
-    "ethers": "^5.7.2",
+    "ethers": "5.7.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "snarkjs": "^0.7.0"

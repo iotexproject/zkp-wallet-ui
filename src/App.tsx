@@ -1,4 +1,4 @@
-import { prove } from "./prover"
+import { prove } from "./signer"
 
 export default function Home() {
   return (
