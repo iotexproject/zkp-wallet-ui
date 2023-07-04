@@ -68,8 +68,6 @@ export default function Home() {
       "0x1249c58b",
     ])
 
-    console.log(op)
-
     const fullOp = await fillUserOp(op, entryPoint)
     let hexifiedUserOp = deepHexlify(await resolveProperties(fullOp))
     setInfo(old => [...old, `request paymaster...`])
