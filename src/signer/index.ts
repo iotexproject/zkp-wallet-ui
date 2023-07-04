@@ -1,5 +1,6 @@
 import { hexlify, keccak256, toUtf8Bytes, hexConcat, defaultAbiCoder } from "ethers/lib/utils";
 import { AccountSigner } from "./utils";
+import { BigNumberish } from "ethers";
 
 // @ts-ignore
 const snarkjs = window.snarkjs
@@ -20,7 +21,7 @@ export class ZKPSigner implements AccountSigner {
     private passport: bigint
     private nonce?: bigint
 
-    constructor(nameHash:string, password: string, nonce?: number) {
+    constructor(nameHash:string, password: string, nonce?: BigNumberish) {
         this.passport = BigInt(keccak256(
             hexConcat([nameHash, hexlify(toUtf8Bytes(password))])
         ))
