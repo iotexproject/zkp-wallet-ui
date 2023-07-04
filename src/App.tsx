@@ -85,8 +85,7 @@ export default function Home() {
     hexifiedUserOp = deepHexlify(await resolveProperties(signedOp))
     setInfo(old => [...old, `send op to bundler...`])
     result = await bundler.send("eth_sendUserOperation", [hexifiedUserOp, entryPoint.address])
-    // @ts-ignore
-    setInfo(old => [...old, `Successful send to bundler with opHash: ${result}`])
+    setInfo(old => [...old, `Successful mint nft with opHash: ${result}`])
   }
 
   return (
