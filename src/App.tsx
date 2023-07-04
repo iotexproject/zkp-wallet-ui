@@ -9,11 +9,11 @@ import { PublicResolver__factory } from "./contracts/PublicResolver__factory"
 import { deepHexlify, fillUserOp, signOp } from "./signer/utils"
 import { EntryPoint__factory } from "@account-abstraction/contracts"
 import { ZKPassAccount__factory } from "./contracts/ZKPassAccount__factory"
-import {useLocalStore} from "mobx-react-lite";
+import {observer, useLocalStore, useObserver} from "mobx-react-lite";
 import {useStore} from "./store";
 import {Login} from "./component/Login";
 
-export default function Home() {
+export const App = observer(() =>  {
   const empty: string[] = []
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
@@ -102,4 +102,6 @@ export default function Home() {
       </div>
 
   );
-}
+});
+
+export default App;
