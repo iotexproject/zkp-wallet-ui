@@ -6,7 +6,7 @@ import { INSRegistry__factory } from "../contracts/INSRegistry__factory"
 import { EntryPoint__factory } from "@account-abstraction/contracts"
 import { addresses } from "../common/constants"
 import { ZKPWalletNFT__factory } from '../contracts/ZKPWalletNFT__factory'
-import { hexConcat, hexlify, keccak256, namehash, resolveProperties, toUtf8Bytes } from 'ethers/lib/utils'
+import { hexConcat, hexlify, keccak256, namehash, resolveProperties, toUtf8Bytes, formatEther } from 'ethers/lib/utils'
 import { ZKPSigner, prove } from '../signer'
 import { PublicResolver__factory } from '../contracts/PublicResolver__factory'
 import { deepHexlify, fillUserOp, signOp } from '../signer/utils'
@@ -22,7 +22,7 @@ export class BaseStore {
         text: ''
     }
 
-    isLogin:  boolean = false
+    isLogin = false
     minted = 0
 
     provider = new providers.JsonRpcProvider(config.endpoint)
@@ -40,6 +40,8 @@ export class BaseStore {
         username: "",
         password: "",
         address: "",
+        balance: "",
+        nft: 0,
     }
 
     constructor() {
@@ -162,5 +164,13 @@ export class BaseStore {
 
     async fetchMintedNFT() {
         this.minted = (await this.nft.nextTokenId()).toNumber()
+    }
+
+    async fillAccount() {
+        const balance = await this.provider.getBalance(this.account.address)
+        this.account.balance = formatEther(balance)
+
+        const amount = await this.nft.balanceOf(this.account.address)
+        this.account.nft = amount.toNumber()
     }
 }
