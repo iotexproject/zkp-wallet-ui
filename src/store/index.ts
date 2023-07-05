@@ -11,5 +11,3 @@ export const useStore = () => React.useContext(StoresContext);
 
 //@ts-ignore
 window._store = rootStore;
-
-
