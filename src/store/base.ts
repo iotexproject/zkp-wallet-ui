@@ -41,6 +41,8 @@ export class BaseStore {
         password: "",
         address: "",
         balance: "",
+        nameHash: "",
+        passHash: "",
         nft: 0,
     }
 
@@ -102,6 +104,26 @@ export class BaseStore {
                 return
             }
         }
+        this.account.nameHash = nameHash
+        this.account.passHash = publicSignals[0]
+        this.disableButton = false
+        this.isLogin = true
+        this.info = {
+            show: true,
+            text: `Logined account ${this.account.username}.zkwallet.io`
+        }
+    }
+
+    async disconnect() {
+        this.isLogin = false
+    }
+
+    async mint() {
+        this.info = {
+            show: true,
+            text: 'Prepare user operation to mint NFT...'
+        }
+        this.disableButton = true
         const op = {
             sender: this.account.address,
             callData: this.accountTpl.interface.encodeFunctionData("execute", [
@@ -116,7 +138,7 @@ export class BaseStore {
             // @ts-ignore
             op.initCode = hexConcat([
                 this.factory.address,
-                this.factory.interface.encodeFunctionData("createAccount", [this.account.username, publicSignals[0]]),
+                this.factory.interface.encodeFunctionData("createAccount", [this.account.username, this.account.passHash]),
             ])
         }
         const fullOp = await fillUserOp(op, this.entryPoint)
@@ -137,7 +159,7 @@ export class BaseStore {
             fullOp,
             this.entryPoint.address,
             chainId,
-            new ZKPSigner(nameHash, this.account.password, fullOp.nonce)
+            new ZKPSigner(this.account.nameHash, this.account.password, fullOp.nonce)
         )
         hexifiedUserOp = deepHexlify(await resolveProperties(signedOp))
 
@@ -158,7 +180,6 @@ export class BaseStore {
                 text: `Create account and mint NFT opHash: ${result}`
             }
         }
-        this.isLogin = true
         this.disableButton = false
     }
 
