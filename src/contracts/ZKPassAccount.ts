@@ -71,6 +71,9 @@ export type UserOperationStructOutput = [
 export interface ZKPassAccountInterface extends utils.Interface {
   functions: {
     "addDeposit()": FunctionFragment;
+    "addEmailGuardian(bytes32)": FunctionFragment;
+    "changePassword(uint256)": FunctionFragment;
+    "email()": FunctionFragment;
     "entryPoint()": FunctionFragment;
     "execute(address,uint256,bytes)": FunctionFragment;
     "executeBatch(address[],bytes[])": FunctionFragment;
@@ -84,7 +87,9 @@ export interface ZKPassAccountInterface extends utils.Interface {
     "owner()": FunctionFragment;
     "passHash()": FunctionFragment;
     "proxiableUUID()": FunctionFragment;
+    "recovery(bytes32,bytes,bytes,uint256)": FunctionFragment;
     "supportsInterface(bytes4)": FunctionFragment;
+    "toBytes(uint256)": FunctionFragment;
     "tokensReceived(address,address,address,uint256,bytes,bytes)": FunctionFragment;
     "upgradeTo(address)": FunctionFragment;
     "upgradeToAndCall(address,bytes)": FunctionFragment;
@@ -97,6 +102,9 @@ export interface ZKPassAccountInterface extends utils.Interface {
   getFunction(
     nameOrSignatureOrTopic:
       | "addDeposit"
+      | "addEmailGuardian"
+      | "changePassword"
+      | "email"
       | "entryPoint"
       | "execute"
       | "executeBatch"
@@ -110,7 +118,9 @@ export interface ZKPassAccountInterface extends utils.Interface {
       | "owner"
       | "passHash"
       | "proxiableUUID"
+      | "recovery"
       | "supportsInterface"
+      | "toBytes"
       | "tokensReceived"
       | "upgradeTo"
       | "upgradeToAndCall"
@@ -124,6 +134,15 @@ export interface ZKPassAccountInterface extends utils.Interface {
     functionFragment: "addDeposit",
     values?: undefined
   ): string;
+  encodeFunctionData(
+    functionFragment: "addEmailGuardian",
+    values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "changePassword",
+    values: [PromiseOrValue<BigNumberish>]
+  ): string;
+  encodeFunctionData(functionFragment: "email", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "entryPoint",
     values?: undefined
@@ -190,8 +209,21 @@ export interface ZKPassAccountInterface extends utils.Interface {
     values?: undefined
   ): string;
   encodeFunctionData(
+    functionFragment: "recovery",
+    values: [
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BytesLike>,
+      PromiseOrValue<BigNumberish>
+    ]
+  ): string;
+  encodeFunctionData(
     functionFragment: "supportsInterface",
     values: [PromiseOrValue<BytesLike>]
+  ): string;
+  encodeFunctionData(
+    functionFragment: "toBytes",
+    values: [PromiseOrValue<BigNumberish>]
   ): string;
   encodeFunctionData(
     functionFragment: "tokensReceived",
@@ -231,6 +263,15 @@ export interface ZKPassAccountInterface extends utils.Interface {
   ): string;
 
   decodeFunctionResult(functionFragment: "addDeposit", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "addEmailGuardian",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(
+    functionFragment: "changePassword",
+    data: BytesLike
+  ): Result;
+  decodeFunctionResult(functionFragment: "email", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "entryPoint", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "execute", data: BytesLike): Result;
   decodeFunctionResult(
@@ -259,10 +300,12 @@ export interface ZKPassAccountInterface extends utils.Interface {
     functionFragment: "proxiableUUID",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "recovery", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "supportsInterface",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "toBytes", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "tokensReceived",
     data: BytesLike
@@ -287,19 +330,36 @@ export interface ZKPassAccountInterface extends utils.Interface {
   ): Result;
 
   events: {
+    "AccountRecovered(uint256)": EventFragment;
     "AdminChanged(address,address)": EventFragment;
     "BeaconUpgraded(address)": EventFragment;
+    "EmailGuardianAdded(bytes32)": EventFragment;
     "Initialized(uint8)": EventFragment;
+    "PasswordChanged(uint256)": EventFragment;
     "Upgraded(address)": EventFragment;
     "ZKPassAccountInitialized(address,bytes32,uint256)": EventFragment;
   };
 
+  getEvent(nameOrSignatureOrTopic: "AccountRecovered"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "AdminChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "BeaconUpgraded"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "EmailGuardianAdded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Initialized"): EventFragment;
+  getEvent(nameOrSignatureOrTopic: "PasswordChanged"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "Upgraded"): EventFragment;
   getEvent(nameOrSignatureOrTopic: "ZKPassAccountInitialized"): EventFragment;
 }
+
+export interface AccountRecoveredEventObject {
+  passHash: BigNumber;
+}
+export type AccountRecoveredEvent = TypedEvent<
+  [BigNumber],
+  AccountRecoveredEventObject
+>;
+
+export type AccountRecoveredEventFilter =
+  TypedEventFilter<AccountRecoveredEvent>;
 
 export interface AdminChangedEventObject {
   previousAdmin: string;
@@ -322,12 +382,33 @@ export type BeaconUpgradedEvent = TypedEvent<
 
 export type BeaconUpgradedEventFilter = TypedEventFilter<BeaconUpgradedEvent>;
 
+export interface EmailGuardianAddedEventObject {
+  email: string;
+}
+export type EmailGuardianAddedEvent = TypedEvent<
+  [string],
+  EmailGuardianAddedEventObject
+>;
+
+export type EmailGuardianAddedEventFilter =
+  TypedEventFilter<EmailGuardianAddedEvent>;
+
 export interface InitializedEventObject {
   version: number;
 }
 export type InitializedEvent = TypedEvent<[number], InitializedEventObject>;
 
 export type InitializedEventFilter = TypedEventFilter<InitializedEvent>;
+
+export interface PasswordChangedEventObject {
+  passHash: BigNumber;
+}
+export type PasswordChangedEvent = TypedEvent<
+  [BigNumber],
+  PasswordChangedEventObject
+>;
+
+export type PasswordChangedEventFilter = TypedEventFilter<PasswordChangedEvent>;
 
 export interface UpgradedEventObject {
   implementation: string;
@@ -379,6 +460,18 @@ export interface ZKPassAccount extends BaseContract {
     addDeposit(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<ContractTransaction>;
+
+    addEmailGuardian(
+      _email: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    changePassword(
+      _passHash: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
+    email(overrides?: CallOverrides): Promise<[string]>;
 
     entryPoint(overrides?: CallOverrides): Promise<[string]>;
 
@@ -440,10 +533,23 @@ export interface ZKPassAccount extends BaseContract {
 
     proxiableUUID(overrides?: CallOverrides): Promise<[string]>;
 
+    recovery(
+      _server: PromiseOrValue<BytesLike>,
+      _data: PromiseOrValue<BytesLike>,
+      _signature: PromiseOrValue<BytesLike>,
+      _passHash: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<ContractTransaction>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<[boolean]>;
+
+    toBytes(
+      x: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<[string] & { b: string }>;
 
     tokensReceived(
       arg0: PromiseOrValue<string>,
@@ -491,6 +597,18 @@ export interface ZKPassAccount extends BaseContract {
   addDeposit(
     overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
   ): Promise<ContractTransaction>;
+
+  addEmailGuardian(
+    _email: PromiseOrValue<BytesLike>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  changePassword(
+    _passHash: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
+  email(overrides?: CallOverrides): Promise<string>;
 
   entryPoint(overrides?: CallOverrides): Promise<string>;
 
@@ -552,10 +670,23 @@ export interface ZKPassAccount extends BaseContract {
 
   proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
+  recovery(
+    _server: PromiseOrValue<BytesLike>,
+    _data: PromiseOrValue<BytesLike>,
+    _signature: PromiseOrValue<BytesLike>,
+    _passHash: PromiseOrValue<BigNumberish>,
+    overrides?: Overrides & { from?: PromiseOrValue<string> }
+  ): Promise<ContractTransaction>;
+
   supportsInterface(
     interfaceId: PromiseOrValue<BytesLike>,
     overrides?: CallOverrides
   ): Promise<boolean>;
+
+  toBytes(
+    x: PromiseOrValue<BigNumberish>,
+    overrides?: CallOverrides
+  ): Promise<string>;
 
   tokensReceived(
     arg0: PromiseOrValue<string>,
@@ -601,6 +732,18 @@ export interface ZKPassAccount extends BaseContract {
 
   callStatic: {
     addDeposit(overrides?: CallOverrides): Promise<void>;
+
+    addEmailGuardian(
+      _email: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    changePassword(
+      _passHash: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
+    email(overrides?: CallOverrides): Promise<string>;
 
     entryPoint(overrides?: CallOverrides): Promise<string>;
 
@@ -662,10 +805,23 @@ export interface ZKPassAccount extends BaseContract {
 
     proxiableUUID(overrides?: CallOverrides): Promise<string>;
 
+    recovery(
+      _server: PromiseOrValue<BytesLike>,
+      _data: PromiseOrValue<BytesLike>,
+      _signature: PromiseOrValue<BytesLike>,
+      _passHash: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<void>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
       overrides?: CallOverrides
     ): Promise<boolean>;
+
+    toBytes(
+      x: PromiseOrValue<BigNumberish>,
+      overrides?: CallOverrides
+    ): Promise<string>;
 
     tokensReceived(
       arg0: PromiseOrValue<string>,
@@ -711,6 +867,13 @@ export interface ZKPassAccount extends BaseContract {
   };
 
   filters: {
+    "AccountRecovered(uint256)"(
+      passHash?: PromiseOrValue<BigNumberish> | null
+    ): AccountRecoveredEventFilter;
+    AccountRecovered(
+      passHash?: PromiseOrValue<BigNumberish> | null
+    ): AccountRecoveredEventFilter;
+
     "AdminChanged(address,address)"(
       previousAdmin?: null,
       newAdmin?: null
@@ -727,8 +890,22 @@ export interface ZKPassAccount extends BaseContract {
       beacon?: PromiseOrValue<string> | null
     ): BeaconUpgradedEventFilter;
 
+    "EmailGuardianAdded(bytes32)"(
+      email?: PromiseOrValue<BytesLike> | null
+    ): EmailGuardianAddedEventFilter;
+    EmailGuardianAdded(
+      email?: PromiseOrValue<BytesLike> | null
+    ): EmailGuardianAddedEventFilter;
+
     "Initialized(uint8)"(version?: null): InitializedEventFilter;
     Initialized(version?: null): InitializedEventFilter;
+
+    "PasswordChanged(uint256)"(
+      passHash?: PromiseOrValue<BigNumberish> | null
+    ): PasswordChangedEventFilter;
+    PasswordChanged(
+      passHash?: PromiseOrValue<BigNumberish> | null
+    ): PasswordChangedEventFilter;
 
     "Upgraded(address)"(
       implementation?: PromiseOrValue<string> | null
@@ -753,6 +930,18 @@ export interface ZKPassAccount extends BaseContract {
     addDeposit(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<BigNumber>;
+
+    addEmailGuardian(
+      _email: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    changePassword(
+      _passHash: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
+    email(overrides?: CallOverrides): Promise<BigNumber>;
 
     entryPoint(overrides?: CallOverrides): Promise<BigNumber>;
 
@@ -814,8 +1003,21 @@ export interface ZKPassAccount extends BaseContract {
 
     proxiableUUID(overrides?: CallOverrides): Promise<BigNumber>;
 
+    recovery(
+      _server: PromiseOrValue<BytesLike>,
+      _data: PromiseOrValue<BytesLike>,
+      _signature: PromiseOrValue<BytesLike>,
+      _passHash: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<BigNumber>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<BigNumber>;
+
+    toBytes(
+      x: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<BigNumber>;
 
@@ -866,6 +1068,18 @@ export interface ZKPassAccount extends BaseContract {
     addDeposit(
       overrides?: PayableOverrides & { from?: PromiseOrValue<string> }
     ): Promise<PopulatedTransaction>;
+
+    addEmailGuardian(
+      _email: PromiseOrValue<BytesLike>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    changePassword(
+      _passHash: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
+    email(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
     entryPoint(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
@@ -927,8 +1141,21 @@ export interface ZKPassAccount extends BaseContract {
 
     proxiableUUID(overrides?: CallOverrides): Promise<PopulatedTransaction>;
 
+    recovery(
+      _server: PromiseOrValue<BytesLike>,
+      _data: PromiseOrValue<BytesLike>,
+      _signature: PromiseOrValue<BytesLike>,
+      _passHash: PromiseOrValue<BigNumberish>,
+      overrides?: Overrides & { from?: PromiseOrValue<string> }
+    ): Promise<PopulatedTransaction>;
+
     supportsInterface(
       interfaceId: PromiseOrValue<BytesLike>,
+      overrides?: CallOverrides
+    ): Promise<PopulatedTransaction>;
+
+    toBytes(
+      x: PromiseOrValue<BigNumberish>,
       overrides?: CallOverrides
     ): Promise<PopulatedTransaction>;
 

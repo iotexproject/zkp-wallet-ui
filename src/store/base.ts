@@ -69,7 +69,7 @@ export class BaseStore {
         this.account.username = this.username.trim()
         this.account.password = this.password.trim()
 
-        const nameHash = namehash(this.account.username + ".zkwallet.io")
+        const nameHash = namehash(this.account.username + ".zwallet.io")
         const resovler = await this.registry.resolver(nameHash)
 
         this.info = {
@@ -110,12 +110,13 @@ export class BaseStore {
         this.isLogin = true
         this.info = {
             show: true,
-            text: `Logined account ${this.account.username}.zkwallet.io`
+            text: `Logined account ${this.account.username}.zwallet.io`
         }
     }
 
     async disconnect() {
         this.isLogin = false
+        this.account.created = false
     }
 
     async mint() {
@@ -132,7 +133,7 @@ export class BaseStore {
                 "0x1249c58b",
             ]),
             callGasLimit: 70000,
-            preVerificationGas: 60000
+            preVerificationGas: 80000
         }
         if (!this.account.created) {
             // @ts-ignore
