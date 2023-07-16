@@ -16,6 +16,7 @@ const config = addresses["testnet"]
 export class BaseStore {
     username: String = ''
     password: String = ''
+    email: String = ''
 
     info = {
         show: false,
@@ -23,6 +24,7 @@ export class BaseStore {
     }
 
     isLogin = false
+    showEmail = false
     minted = 0
 
     provider = new providers.JsonRpcProvider(config.endpoint)
@@ -43,6 +45,7 @@ export class BaseStore {
         balance: "",
         nameHash: "",
         passHash: "",
+        guarded: false,
         nft: 0,
     }
 
@@ -188,11 +191,74 @@ export class BaseStore {
         this.minted = (await this.nft.nextTokenId()).toNumber()
     }
 
+    async openEmailGuardian() {
+        this.showEmail = true
+    }
+
     async fillAccount() {
         const balance = await this.provider.getBalance(this.account.address)
         this.account.balance = formatEther(balance)
 
         const amount = await this.nft.balanceOf(this.account.address)
         this.account.nft = amount.toNumber()
+
+        const email = await ZKPassAccount__factory.connect(this.account.address, this.provider).email()
+        if (email !== "0x" + "0".repeat(64)) {
+            this.account.guarded = true
+        }
+    }
+
+    async addEmailGuardian() {
+        const emailHash = keccak256(toUtf8Bytes(this.email.trim()))
+
+        this.info = {
+            show: true,
+            text: 'Prepare user operation to add email guardian...'
+        }
+        this.disableButton = true
+        const op = {
+            sender: this.account.address,
+            callData: this.accountTpl.interface.encodeFunctionData("execute", [
+                this.account.address,
+                0,
+                `0x99a44531${emailHash.substring(2)}`,
+            ]),
+            callGasLimit: 70000,
+            preVerificationGas: 80000
+        }
+        const fullOp = await fillUserOp(op, this.entryPoint)
+        let hexifiedUserOp = deepHexlify(await resolveProperties(fullOp))
+        this.info = {
+            show: true,
+            text: 'Request paymaster signature...'
+        }
+        let result = await this.paymaster.send("eth_signVerifyingPaymaster", [hexifiedUserOp])
+        fullOp.paymasterAndData = result
+
+        const chainId = (await this.provider.getNetwork()).chainId
+        this.info = {
+            show: true,
+            text: 'Sign user operation using zk prover...'
+        }
+        const signedOp = await signOp(
+            fullOp,
+            this.entryPoint.address,
+            chainId,
+            new ZKPSigner(this.account.nameHash, this.account.password, fullOp.nonce)
+        )
+        hexifiedUserOp = deepHexlify(await resolveProperties(signedOp))
+
+        this.info = {
+            show: true,
+            text: 'Send user operation to bundler...'
+        }
+        result = await this.bundler.send("eth_sendUserOperation", [hexifiedUserOp, this.entryPoint.address])
+
+        this.info = {
+            show: true,
+            text: `Add email guardian opHash: ${result}`
+        }
+        this.disableButton = false
+        this.showEmail = false
     }
 }
