@@ -25,7 +25,10 @@ export class BaseStore {
 
     isLogin = false
     showEmail = false
+    showRecovery = false
+    showRecoveryMessage = false
     minted = 0
+    recoveryMessage = ''
 
     provider = new providers.JsonRpcProvider(config.endpoint)
     paymaster = new providers.JsonRpcProvider(config.paymaster)
@@ -104,6 +107,7 @@ export class BaseStore {
                     show: true,
                     text: 'Password incorrect'
                 }
+                this.showRecovery = true
                 return
             }
         }
@@ -260,5 +264,71 @@ export class BaseStore {
         }
         this.disableButton = false
         this.showEmail = false
+    }
+
+    async generateRecovery() {
+        this.info = {
+            show: true,
+            text: 'Generate email recovery message...'
+        }
+
+        const username = this.username.trim()
+        const password = this.password.trim()
+        if (username === "") {
+            this.info = {
+                show: true,
+                text: 'Account name is empty'
+            }
+            return
+        }
+        if (password === "") {
+            this.info = {
+                show: true,
+                text: 'Password is empty'
+            }
+            return
+        }
+        const nameHash = namehash(username + ".zwallet.io")
+        const resovler = await this.registry.resolver(nameHash)
+        if (resovler === constants.AddressZero) {
+            this.info = {
+                show: true,
+                text: `Account ${username}.zwallet.io haven't create`
+            }
+            return
+        }
+        const publicRessolver = PublicResolver__factory.connect(resovler, this.provider)
+        const address = await publicRessolver["addr(bytes32)"](nameHash)
+
+        const email = await ZKPassAccount__factory.connect(address, this.provider).email()
+        if (email === "0x" + "0".repeat(64)) {
+            this.recoveryMessage = `Account ${username}.zwallet.io haven't add email guardian.`
+            this.showRecoveryMessage = true
+            return
+        }
+        
+        this.info = {
+            show: true,
+            text: 'Generate password proof...'
+        }
+        const passport = BigInt(keccak256(
+            hexConcat([nameHash, hexlify(toUtf8Bytes(password))])
+        ))
+        const {publicSignals} = await prove(
+            BigInt(0), // nonce
+            BigInt(0), // opHash
+            passport,
+            "passport.wasm",
+            "passport_0001.zkey"
+        )
+        const chainId = (await this.provider.getNetwork()).chainId
+        const passHash = hexlify(BigInt(publicSignals[0]))
+
+        this.recoveryMessage =  `Send an email with below text as subject to iopay-recover@iotex.me\n01${chainId}${address.toLowerCase()}${passHash.substring(2)}`
+        this.showRecoveryMessage = true
+    }
+
+    async closeRecoveryMessage() {
+        this.showRecoveryMessage = false
     }
 }
