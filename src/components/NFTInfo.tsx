@@ -11,8 +11,13 @@ export const NFTInfo = observer(() => {
     }, [])
 
     return (
-        <div className="text-1xl font-bold pb-10 text-gray-900">
-            {base.minted} / 20000 minted
+        <div style={{marginBottom: 40}}>
+        <h3 className="font-bold text-gray-900">
+            {base.minted} / 20000
+        </h3>
+        <p className="text-gray-600">
+        NFTs minted by all users
+        </p>
         </div>
     )
 })

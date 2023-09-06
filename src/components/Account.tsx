@@ -16,11 +16,11 @@ export const Account = observer(() => {
         <div className="text-gray-700 text-base">
             <div className="text-1xl">
                 <div>Account name: {base.account.username}.zkwallets.io</div>
-                <div>Account created: {base.account.created?'True':'False'}</div>
+                <div>Account minted: {base.account.created?'True':'False'}</div>
                 <div>Account address: <a target="_blank" href={"https://testnet.iotexscan.io/address/"+base.account.address}>{base.account.address}</a></div>
                 <div>Account balance: {base.account.balance} IOTX</div>
-                <div>Guarded by email: {base.account.guarded?'True':'False'}</div>
-                <div>NFT amount: {base.account.nft}</div>
+                <div>Recovery email: {base.account.guarded?'Set':'Not Set'}</div>
+                <div>Minted NFT amount: {base.account.nft}</div>
                 {base.disableButton? (
                         <button
                             type="button" disabled
@@ -32,7 +32,7 @@ export const Account = observer(() => {
                             type="button"
                             className="flex mt-10 w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                             onClick={() => base.mint()}
-                        >Mint
+                        >Mint an NFT
                         </button>
                     )
                 }
@@ -41,7 +41,7 @@ export const Account = observer(() => {
                         type="button"
                         className="flex mt-10 w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                         onClick={() => base.openEmailGuardian()}
-                    >{base.account.guarded?'Change Email Guardian':'Add Email Guardian'}
+                    >{base.account.guarded?'Change Recovery Email':'Add Recovery Email'}
                     </button>
                     : null
                 }
