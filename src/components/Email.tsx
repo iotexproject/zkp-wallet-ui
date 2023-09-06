@@ -7,9 +7,9 @@ export const Email = observer(() => {
     return (
         <div className="text-gray-700 text-base">
             <form className="space-y-6" action="#" method="POST">
-                <div>Account name: {base.account.username}.zkwallets.io</div>
+                <div><b>Account name</b>: {base.account.username}.zkwallets.io</div>
                 <div>
-                    <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">Guardian Email</label>
+                    <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">New Recovery Email</label>
                     <div className="mt-2">
                         <input onChange={e => {
                             base.email = e.target.value

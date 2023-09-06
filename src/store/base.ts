@@ -50,6 +50,7 @@ export class BaseStore {
         nameHash: "",
         passHash: "",
         guarded: false,
+        email: "",
         nft: 0,
     }
 
@@ -215,6 +216,7 @@ export class BaseStore {
             const email = await ZKPassAccount__factory.connect(this.account.address, this.provider).email()
             if (email !== "0x" + "0".repeat(64)) {
                 this.account.guarded = true
+                this.account.email = email
             }
         } catch (err) {
         }
