@@ -129,6 +129,7 @@ export class BaseStore {
 
     async disconnect() {
         this.isLogin = false
+        this.account.guarded = false
         this.account.created = false
     }
 
