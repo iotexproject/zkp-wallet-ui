@@ -220,6 +220,14 @@ export class BaseStore {
     }
 
     async addEmailGuardian() {
+        if (this.email.trim() === "") {
+            this.info = {
+                show: true,
+                text: 'Email is empty'
+            }
+            return
+        }
+
         const emailHash = keccak256(toUtf8Bytes(this.email.trim()))
 
         this.info = {
