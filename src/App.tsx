@@ -17,7 +17,7 @@ export const App = observer(() => {
             </h1>
             <h3 className="text-gray-900 font-bold">Overview</h3>
             <p className="text-gray-600">
-              This demo illustrates the application of Account Abstraction,
+              This demo illustrates the application of ZK-SNARK to Account Abstraction,
               enabling users to create a Blockchain Wallet that they can
               seamlessly control with just a username and password.
               Additionally, users can recover their wallet via email, and there
