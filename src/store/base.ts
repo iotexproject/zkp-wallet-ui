@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx'
-import { constants, providers } from "ethers"
+import { BigNumber, constants, ethers, providers } from "ethers"
 import { ZKPassAccount__factory } from "../contracts/ZKPassAccount__factory"
 import { ZKPassAccountFactory__factory } from "../contracts/ZKPassAccountFactory__factory"
 import { INSRegistry__factory } from "../contracts/INSRegistry__factory"
@@ -7,9 +7,9 @@ import { EntryPoint__factory } from "@account-abstraction/contracts"
 import { addresses } from "../common/constants"
 import { ZKPWalletNFT__factory } from '../contracts/ZKPWalletNFT__factory'
 import { hexConcat, hexlify, keccak256, namehash, resolveProperties, toUtf8Bytes, formatEther } from 'ethers/lib/utils'
-import { ZKPSigner, prove } from '../signer'
+import { ZKPAccount, ZKPSigner, prove } from '../signer'
 import { PublicResolver__factory } from '../contracts/PublicResolver__factory'
-import { deepHexlify, fillUserOp, signOp } from '../signer/utils'
+import { Client, Presets } from 'userop'
 
 const config = addresses["testnet"]
 
@@ -39,6 +39,7 @@ export class BaseStore {
     entryPoint = EntryPoint__factory.connect(config.entryPoint, this.provider)
     nft = ZKPWalletNFT__factory.connect(config.nft, this.provider)
     disableButton = false
+    client = null;
 
     account = {
         created: false,
@@ -75,7 +76,7 @@ export class BaseStore {
         this.account.username = this.username.trim()
         this.account.password = this.password.trim()
 
-        const nameHash = namehash(this.account.username + ".zwallet.io")
+        const nameHash = namehash(this.account.username + ".zkwallets.io")
         const resovler = await this.registry.resolver(nameHash)
 
         this.info = {
@@ -115,9 +116,14 @@ export class BaseStore {
         this.account.passHash = publicSignals[0]
         this.disableButton = false
         this.isLogin = true
+        // @ts-ignore
+        this.client = await Client.init(config.endpoint, {
+            entryPoint: config.entryPoint,
+            overrideBundlerRpc: config.bundler,
+        })
         this.info = {
             show: true,
-            text: `Logined account ${this.account.username}.zwallet.io`
+            text: `Logined account ${this.account.username}.zkwallets.io`
         }
     }
 
@@ -132,62 +138,60 @@ export class BaseStore {
             text: 'Prepare user operation to mint NFT...'
         }
         this.disableButton = true
-        const op = {
-            sender: this.account.address,
-            callData: this.accountTpl.interface.encodeFunctionData("execute", [
-                config.nft,
-                0,
-                "0x1249c58b",
-            ]),
-            callGasLimit: 70000,
-            preVerificationGas: 80000
-        }
-        if (!this.account.created) {
-            // @ts-ignore
-            op.initCode = hexConcat([
-                this.factory.address,
-                this.factory.interface.encodeFunctionData("createAccount", [this.account.username, this.account.passHash]),
-            ])
-        }
-        const fullOp = await fillUserOp(op, this.entryPoint)
-        let hexifiedUserOp = deepHexlify(await resolveProperties(fullOp))
-        this.info = {
-            show: true,
-            text: 'Request paymaster signature...'
-        }
-        let result = await this.paymaster.send("eth_signVerifyingPaymaster", [hexifiedUserOp])
-        fullOp.paymasterAndData = result
 
-        const chainId = (await this.provider.getNetwork()).chainId
-        this.info = {
-            show: true,
-            text: 'Sign user operation using zk prover...'
+        // mint NFT
+        const callData = this.accountTpl.interface.encodeFunctionData("execute", [
+            config.nft,
+            0,
+            "0x1249c58b",
+        ])
+        let nonce = 0
+        if (this.account.created) {
+            nonce = (await ZKPassAccount__factory.connect(this.account.address, this.provider).getNonce()).toNumber()
         }
-        const signedOp = await signOp(
-            fullOp,
-            this.entryPoint.address,
-            chainId,
-            new ZKPSigner(this.account.nameHash, this.account.password, fullOp.nonce)
-        )
-        hexifiedUserOp = deepHexlify(await resolveProperties(signedOp))
+
+        const gas = await this.paymaster.send("pm_gasRemain", [this.account.address])
+        if (BigNumber.from(gas).lt(ethers.utils.parseEther("1.0"))) {
+            this.info = {
+                show: true,
+                text: 'Request paymaster gas...'
+            }
+            await this.paymaster.send("pm_requestGas", [this.account.address])
+        }
+        const signer = new ZKPSigner(this.account.username, this.account.password, nonce)
+        const accountBuilder = await ZKPAccount.init(signer, config.endpoint, {
+            overrideBundlerRpc: config.bundler,
+            entryPoint: config.entryPoint,
+            paymasterMiddleware: Presets.Middleware.verifyingPaymaster(
+                config.paymaster,
+                ""
+            ),
+        })
+        accountBuilder.setCallData(callData)
 
         this.info = {
             show: true,
             text: 'Send user operation to bundler...'
         }
-        result = await this.bundler.send("eth_sendUserOperation", [hexifiedUserOp, this.entryPoint.address])
-
+        // @ts-ignore
+        const response = await this.client.sendUserOperation(accountBuilder)
         if (this.account.created) {
             this.info = {
                 show: true,
-                text: `Mint NFT opHash: ${result}`
+                text: `Mint NFT opHash: ${response.userOpHash}`
             }
         } else {
             this.info = {
                 show: true,
-                text: `Create account and mint NFT opHash: ${result}`
+                text: `Create account and mint NFT opHash: ${response.userOpHash}`
             }
         }
+        const userOperationEvent = await response.wait()
+        this.info = {
+            show: true,
+            text: `Mint NFT txhash: ${userOperationEvent?.transactionHash}`
+        }
+        this.account.created = true
         this.disableButton = false
     }
 
@@ -206,9 +210,12 @@ export class BaseStore {
         const amount = await this.nft.balanceOf(this.account.address)
         this.account.nft = amount.toNumber()
 
-        const email = await ZKPassAccount__factory.connect(this.account.address, this.provider).email()
-        if (email !== "0x" + "0".repeat(64)) {
-            this.account.guarded = true
+        try {
+            const email = await ZKPassAccount__factory.connect(this.account.address, this.provider).email()
+            if (email !== "0x" + "0".repeat(64)) {
+                this.account.guarded = true
+            }
+        } catch (err) {
         }
     }
 
@@ -220,47 +227,50 @@ export class BaseStore {
             text: 'Prepare user operation to add email guardian...'
         }
         this.disableButton = true
-        const op = {
-            sender: this.account.address,
-            callData: this.accountTpl.interface.encodeFunctionData("execute", [
-                this.account.address,
-                0,
-                `0x99a44531${emailHash.substring(2)}`,
-            ]),
-            callGasLimit: 70000,
-            preVerificationGas: 80000
-        }
-        const fullOp = await fillUserOp(op, this.entryPoint)
-        let hexifiedUserOp = deepHexlify(await resolveProperties(fullOp))
-        this.info = {
-            show: true,
-            text: 'Request paymaster signature...'
-        }
-        let result = await this.paymaster.send("eth_signVerifyingPaymaster", [hexifiedUserOp])
-        fullOp.paymasterAndData = result
 
-        const chainId = (await this.provider.getNetwork()).chainId
-        this.info = {
-            show: true,
-            text: 'Sign user operation using zk prover...'
+        const callData = this.accountTpl.interface.encodeFunctionData("execute", [
+            this.account.address,
+            0,
+            `0x99a44531${emailHash.substring(2)}`,
+        ])
+        let nonce = 0
+        if (this.account.created) {
+            nonce = (await ZKPassAccount__factory.connect(this.account.address, this.provider).getNonce()).toNumber()
         }
-        const signedOp = await signOp(
-            fullOp,
-            this.entryPoint.address,
-            chainId,
-            new ZKPSigner(this.account.nameHash, this.account.password, fullOp.nonce)
-        )
-        hexifiedUserOp = deepHexlify(await resolveProperties(signedOp))
+        const gas = await this.paymaster.send("pm_gasRemain", [this.account.address])
+        if (BigNumber.from(gas).lt(ethers.utils.parseEther("1.0"))) {
+            this.info = {
+                show: true,
+                text: 'Request paymaster gas...'
+            }
+            await this.paymaster.send("pm_requestGas", [this.account.address])
+        }
+        const signer = new ZKPSigner(this.account.username, this.account.password, nonce)
+        const accountBuilder = await ZKPAccount.init(signer, config.endpoint, {
+            overrideBundlerRpc: config.bundler,
+            entryPoint: config.entryPoint,
+            paymasterMiddleware: Presets.Middleware.verifyingPaymaster(
+                config.paymaster,
+                ""
+            ),
+        })
+        accountBuilder.setCallData(callData)
 
         this.info = {
             show: true,
             text: 'Send user operation to bundler...'
         }
-        result = await this.bundler.send("eth_sendUserOperation", [hexifiedUserOp, this.entryPoint.address])
+        // @ts-ignore
+        const response = await this.client.sendUserOperation(accountBuilder)
 
         this.info = {
             show: true,
-            text: `Add email guardian opHash: ${result}`
+            text: `Add email guardian opHash: ${response.userOpHash}`
+        }
+        const userOperationEvent = await response.wait()
+        this.info = {
+            show: true,
+            text: `Add email guardian txhash: ${userOperationEvent?.transactionHash}`
         }
         this.disableButton = false
         this.showEmail = false
@@ -288,12 +298,12 @@ export class BaseStore {
             }
             return
         }
-        const nameHash = namehash(username + ".zwallet.io")
+        const nameHash = namehash(username + ".zkwallets.io")
         const resovler = await this.registry.resolver(nameHash)
         if (resovler === constants.AddressZero) {
             this.info = {
                 show: true,
-                text: `Account ${username}.zwallet.io haven't create`
+                text: `Account ${username}.zkwallets.io haven't create`
             }
             return
         }
@@ -302,7 +312,7 @@ export class BaseStore {
 
         const email = await ZKPassAccount__factory.connect(address, this.provider).email()
         if (email === "0x" + "0".repeat(64)) {
-            this.recoveryMessage = `Account ${username}.zwallet.io haven't add email guardian.`
+            this.recoveryMessage = `Account ${username}.zkwallets.io haven't add email guardian.`
             this.showRecoveryMessage = true
             return
         }

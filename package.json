@@ -16,7 +16,8 @@
     "mobx-react-lite": "^3.2.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "snarkjs": "^0.7.0"
+    "snarkjs": "^0.7.0",
+    "userop": "^0.3.3"
   },
   "devDependencies": {
     "@types/react": "^18.0.9",

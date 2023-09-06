@@ -8,14 +8,14 @@ export const Account = observer(() => {
 
     useEffect(() => {
         base.fillAccount()
-    })
-    setInterval(() => base.fillAccount(), 1000)
+        setInterval(async () => await base.fillAccount(), 5000)
+    }, [])
 
     return (
         base.showEmail? <Email />:
         <div className="text-gray-700 text-base">
             <div className="text-1xl">
-                <div>Account name: {base.account.username}.zwallet.io</div>
+                <div>Account name: {base.account.username}.zkwallets.io</div>
                 <div>Account created: {base.account.created?'True':'False'}</div>
                 <div>Account address: <a target="_blank" href={"https://testnet.iotexscan.io/address/"+base.account.address}>{base.account.address}</a></div>
                 <div>Account balance: {base.account.balance} IOTX</div>

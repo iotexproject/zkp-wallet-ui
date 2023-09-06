@@ -7,7 +7,7 @@ export const Email = observer(() => {
     return (
         <div className="text-gray-700 text-base">
             <form className="space-y-6" action="#" method="POST">
-                <div>Account name: {base.account.username}.zwallet.io</div>
+                <div>Account name: {base.account.username}.zkwallets.io</div>
                 <div>
                     <label htmlFor="email" className="block text-sm font-medium leading-6 text-gray-900">Guardian Email</label>
                     <div className="mt-2">

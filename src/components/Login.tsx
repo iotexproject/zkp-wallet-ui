@@ -19,7 +19,7 @@ export const Login = observer(() => {
                                 className="block flex-1 border-0 bg-transparent py-1.5 pl-2 text-gray-900 placeholder:text-gray-400 focus:ring-0 sm:text-sm sm:leading-6"
                                 placeholder="test"></input>
                             <span
-                                className="flex select-none items-center pr-2 text-gray-500 sm:text-sm">.zwallet.io</span>
+                                className="flex select-none items-center pr-2 text-gray-500 sm:text-sm">.zkwallets.io</span>
                         </div>
                     </div>
                 </div>
