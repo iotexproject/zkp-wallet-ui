@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx'
-import { BigNumber, constants, ethers, providers } from "ethers"
+import { constants, providers } from "ethers"
 import { ZKPassAccount__factory } from "../contracts/ZKPassAccount__factory"
 import { ZKPassAccountFactory__factory } from "../contracts/ZKPassAccountFactory__factory"
 import { INSRegistry__factory } from "../contracts/INSRegistry__factory"
@@ -130,6 +130,9 @@ export class BaseStore {
 
     async disconnect() {
         this.isLogin = false
+        this.disableButton = false
+        this.showRecovery = false
+        this.account.nft = 0
         this.account.guarded = false
         this.account.created = false
     }
@@ -152,14 +155,6 @@ export class BaseStore {
             nonce = (await ZKPassAccount__factory.connect(this.account.address, this.provider).getNonce()).toNumber()
         }
 
-        const gas = await this.paymaster.send("pm_gasRemain", [this.account.address])
-        if (BigNumber.from(gas).lt(ethers.utils.parseEther("1.0"))) {
-            this.info = {
-                show: true,
-                text: 'Request paymaster gas...'
-            }
-            await this.paymaster.send("pm_requestGas", [this.account.address])
-        }
         const signer = new ZKPSigner(this.account.username, this.account.password, nonce)
         const accountBuilder = await ZKPAccount.init(signer, config.endpoint, {
             overrideBundlerRpc: config.bundler,
@@ -219,6 +214,7 @@ export class BaseStore {
                 this.account.email = email
             }
         } catch (err) {
+            this.account.guarded = false
         }
     }
 
@@ -247,14 +243,6 @@ export class BaseStore {
         let nonce = 0
         if (this.account.created) {
             nonce = (await ZKPassAccount__factory.connect(this.account.address, this.provider).getNonce()).toNumber()
-        }
-        const gas = await this.paymaster.send("pm_gasRemain", [this.account.address])
-        if (BigNumber.from(gas).lt(ethers.utils.parseEther("1.0"))) {
-            this.info = {
-                show: true,
-                text: 'Request paymaster gas...'
-            }
-            await this.paymaster.send("pm_requestGas", [this.account.address])
         }
         const signer = new ZKPSigner(this.account.username, this.account.password, nonce)
         const accountBuilder = await ZKPAccount.init(signer, config.endpoint, {
