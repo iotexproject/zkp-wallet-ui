@@ -10,6 +10,7 @@ export const Login = observer(() => {
                 <div>
                     <label htmlFor="username" className="block text-sm font-medium leading-6 text-gray-900">Account
                         name</label>
+                    <p className="text-gray-600 text-xs">Please enter your zk wallet name if you already have one, or chose a name for a new account:</p>
                     <div className="mt-2">
                         <div
                             className="flex rounded-md shadow-sm ring-1 ring-inset ring-gray-300 focus-within:ring-2 focus-within:ring-inset focus-within:ring-indigo-600 sm:max-w-md">
@@ -24,9 +25,11 @@ export const Login = observer(() => {
                     </div>
                 </div>
                 <div>
-                    <div className="flex items-center justify-between">
+                    <div>
                         <label htmlFor="password"
                             className="block text-sm font-medium leading-6 text-gray-900">Password</label>
+                            <p className="text-gray-600 text-xs">Please enter your zk wallet password if you already have one, or chose a password for a new account. If you input the wrong password for an existing account, you'll be allowed to recover by email if you enabled email recovery for your wallet.</p>
+
                     </div>
                     <div className="mt-2">
                         <input onChange={e => {
