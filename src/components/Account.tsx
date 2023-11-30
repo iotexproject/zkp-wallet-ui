@@ -8,7 +8,7 @@ export const Account = observer(() => {
 
     useEffect(() => {
         base.fillAccount()
-        setInterval(async () => await base.fillAccount(), 5000)
+        setInterval(async () => await base.fillAccount(), 10000)
     }, [])
 
     return (

@@ -7,7 +7,7 @@ export const NFTInfo = observer(() => {
 
     useEffect(() => {
         base.fetchMintedNFT()
-        setInterval(async () => await base.fetchMintedNFT(), 5000)
+        setInterval(async () => await base.fetchMintedNFT(), 10000)
     }, [])
 
     return (

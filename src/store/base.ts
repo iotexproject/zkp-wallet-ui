@@ -6,7 +6,7 @@ import { INSRegistry__factory } from "../contracts/INSRegistry__factory"
 import { EntryPoint__factory } from "@account-abstraction/contracts"
 import { addresses } from "../common/constants"
 import { ZKPWalletNFT__factory } from '../contracts/ZKPWalletNFT__factory'
-import { hexConcat, hexlify, keccak256, namehash, resolveProperties, toUtf8Bytes, formatEther } from 'ethers/lib/utils'
+import { hexConcat, hexlify, keccak256, namehash, toUtf8Bytes, formatEther } from 'ethers/lib/utils'
 import { ZKPAccount, ZKPSigner, prove } from '../signer'
 import { PublicResolver__factory } from '../contracts/PublicResolver__factory'
 import { Client, Presets } from 'userop'
@@ -125,6 +125,13 @@ export class BaseStore {
         this.info = {
             show: true,
             text: `Logined account ${this.account.username}.zkwallets.io`
+        }
+
+        try {
+            // claim gas
+            await this.paymaster.send('pm_requestGas', [this.account.address])
+        } catch (e) {
+            console.log(e);
         }
     }
 

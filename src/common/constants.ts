@@ -2,7 +2,7 @@ export const addresses = {
     "testnet": {
         endpoint: "https://babel-api.testnet.iotex.io",
         bundler: "https://bundler.testnet.w3bstream.com",
-        paymaster: "https://paymaster.testnet.w3bstream.com/rpc/d98ecac885f4406d87517263b83cb237",
+        paymaster: "https://paymaster.testnet.w3bstream.com/rpc/a0a7767f2aaa4db1b385f71dd82e55ea",
         // endpoint: "http://127.0.0.1:8545",
         // bundler: "http://127.0.0.1:4337",
         // paymaster: "http://localhost:8888/rpc/1234567890",
