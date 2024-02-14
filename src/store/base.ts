@@ -1,5 +1,5 @@
 import { makeAutoObservable } from 'mobx'
-import { constants, providers } from "ethers"
+import { constants, ethers, providers } from "ethers"
 import { ZKPassAccount__factory } from "../contracts/ZKPassAccount__factory"
 import { ZKPassAccountFactory__factory } from "../contracts/ZKPassAccountFactory__factory"
 import { INSRegistry__factory } from "../contracts/INSRegistry__factory"
@@ -17,6 +17,7 @@ export class BaseStore {
     username: String = ''
     password: String = ''
     email: String = ''
+    code: String = ''
 
     info = {
         show: false,
@@ -33,6 +34,7 @@ export class BaseStore {
     provider = new providers.JsonRpcProvider(config.endpoint)
     paymaster = new providers.JsonRpcProvider(config.paymaster)
     bundler = new providers.JsonRpcProvider(config.bundler)
+    binder = new providers.JsonRpcProvider(config.binder);
     accountTpl = new ZKPassAccount__factory()
     factory = ZKPassAccountFactory__factory.connect(config.accountFactory, this.provider)
     registry = INSRegistry__factory.connect(config.registry, this.provider)
@@ -51,6 +53,7 @@ export class BaseStore {
         passHash: "",
         guarded: false,
         email: "",
+        code: "",
         nft: 0,
     }
 
@@ -77,7 +80,7 @@ export class BaseStore {
         this.account.username = this.username.trim()
         this.account.password = this.password.trim()
 
-        const nameHash = namehash(this.account.username + ".zkwallets.io")
+        const nameHash = namehash(this.account.username + ".t2wallet.io")
         const resovler = await this.registry.resolver(nameHash)
 
         this.info = {
@@ -124,14 +127,13 @@ export class BaseStore {
         })
         this.info = {
             show: true,
-            text: `Logined account ${this.account.username}.zkwallets.io`
+            text: `Logined account ${this.account.username}.t2wallet.io`
         }
 
         try {
             // claim gas
             await this.paymaster.send('pm_requestGas', [this.account.address])
         } catch (e) {
-            console.log(e);
         }
     }
 
@@ -225,6 +227,22 @@ export class BaseStore {
         }
     }
 
+    async sendCode() {
+        if (this.email.trim() === "") {
+            this.info = {
+                show: true,
+                text: 'Email is empty'
+            }
+            return
+        }
+
+        await this.binder.send("send_code", [this.account.address, this.email.trim()])
+        this.info = {
+            show: true,
+            text: `Verify code already send to [${this.email.trim()}]`
+        }
+    }
+
     async addEmailGuardian() {
         if (this.email.trim() === "") {
             this.info = {
@@ -232,6 +250,28 @@ export class BaseStore {
                 text: 'Email is empty'
             }
             return
+        }
+        if (this.code.trim() === "") {
+            this.info = {
+                show: true,
+                text: 'Verfy code is empty'
+            }
+            return
+        }
+        let signature = "";
+        try {
+            signature = await this.binder.send("verify_code", [
+                this.account.address,
+                this.email.trim(),
+                this.code.trim()
+            ])
+        } catch (err) {
+            this.info = {
+                show: true,
+                // @ts-ignore
+                text: `verify code error: ${err!.error!.message}`
+            }
+            return 
         }
 
         const emailHash = keccak256(toUtf8Bytes(this.email.trim()))
@@ -242,10 +282,16 @@ export class BaseStore {
         }
         this.disableButton = true
 
+        console.log(signature);
+        
+        const callParams = ethers.utils.defaultAbiCoder.encode(
+            ["bytes32", "bytes"],
+            [emailHash, signature]
+        )
         const callData = this.accountTpl.interface.encodeFunctionData("execute", [
             this.account.address,
             0,
-            `0x99a44531${emailHash.substring(2)}`,
+            `0x7c5b84e7${callParams.substring(2)}`,
         ])
         let nonce = 0
         if (this.account.created) {
@@ -304,12 +350,12 @@ export class BaseStore {
             }
             return
         }
-        const nameHash = namehash(username + ".zkwallets.io")
+        const nameHash = namehash(username + ".t2wallet.io")
         const resovler = await this.registry.resolver(nameHash)
         if (resovler === constants.AddressZero) {
             this.info = {
                 show: true,
-                text: `Account ${username}.zkwallets.io haven't create`
+                text: `Account ${username}.t2wallet.io haven't create`
             }
             return
         }
@@ -318,7 +364,7 @@ export class BaseStore {
 
         const email = await ZKPassAccount__factory.connect(address, this.provider).email()
         if (email === "0x" + "0".repeat(64)) {
-            this.recoveryMessage = `Account ${username}.zkwallets.io haven't add email guardian.`
+            this.recoveryMessage = `Account ${username}.t2wallet.io haven't add email guardian.`
             this.showRecoveryMessage = true
             return
         }

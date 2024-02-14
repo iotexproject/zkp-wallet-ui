@@ -31,7 +31,7 @@ export class ZKPSigner {
     private nonce?: bigint
 
     constructor(name:string, password: string, nonce?: number | BigNumber) {
-        const nameHash = namehash(name + ".zkwallets.io")
+        const nameHash = namehash(name + ".t2wallet.io")
         this.passport = BigInt(keccak256(
             hexConcat([nameHash, hexlify(toUtf8Bytes(password))])
         ))
@@ -104,7 +104,7 @@ export class ZKPAccount extends UserOperationBuilder {
             this.provider
         )
         this.factory = ZKPassAccountFactory__factory.connect(
-            opts?.factory || '0x1188fDa16947dB086408Dc47A3267Aa3C4Aca9c4',
+            opts?.factory || '0x85B6E973EF283727A2c7E2D8D6C86AE8bcAb8029',
             this.provider
         )
         this.initCode = "0x"
